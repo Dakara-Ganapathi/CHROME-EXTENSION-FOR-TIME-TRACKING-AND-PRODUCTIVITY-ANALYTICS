@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Time Tracker</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      min-width: 250px;
+      padding: 10px;
+    }
+    h2 {
+      margin-top: 0;
+    }
+    ul {
+      list-style: none;
+      padding-left: 0;
+    }
+    li {
+      margin: 5px 0;
+      font-size: 14px;
+    }
+    .domain {
+      font-weight: bold;
+    }
+    .time {
+      color: #555;
+    }
+    button {
+      margin-top: 10px;
+      padding: 5px 10px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h2>Time Spent on Sites</h2>
+  <ul id="timeList">Loading...</ul>
+  <button id="clearBtn">Clear Data</button>
+
+  <script>
+    const timeList = document.getElementById('timeList');
+    const clearBtn = document.getElementById('clearBtn');
+
+    function msToHMS(ms) {
+      let totalSeconds = Math.floor(ms / 1000);
+      const hours = Math.floor(totalSeconds / 3600);
+      totalSeconds %= 3600;
+      const minutes = Math.floor(totalSeconds / 60);
+      const seconds = totalSeconds % 60;
+
+      return (
+        (hours > 0 ? hours + 'h ' : '') +
+        (minutes > 0 ? minutes + 'm ' : '') +
+        seconds + 's'
+      );
+    }
+
+    function loadTimeData() {
+      chrome.storage.local.get({timeData: {}}, (result) => {
+        const timeData = result.timeData;
+        timeList.innerHTML = '';
+        if (Object.keys(timeData).length === 0) {
+          timeList.textContent = 'No data yet.';
+          return;
+        }
+
+        Object.entries(timeData).forEach(([domain, ms]) => {
+          const li = document.createElement('li');
+          li.innerHTML = `<span class="domain">${domain}</span>: <span class="time">${msToHMS(ms)}</span>`;
+          timeList.appendChild(li);
+        });
+      });
+    }
+
+    clearBtn.addEventListener('click', () => {
+      if (confirm('Clear all time tracking data?')) {
+        chrome.storage.local.set({timeData: {}}, () => {
+          loadTimeData();
+        });
+      }
+    });
+
+    loadTimeData();
+  </script>
+</body>
+</html>
